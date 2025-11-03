@@ -11,14 +11,14 @@
             "id": "27627d8be76a30b2",
             "type": "leaf",
             "state": {
-              "type": "split-diff-view",
+              "type": "markdown",
               "state": {
-                "aFile": "Welcome.md",
-                "bFile": "Welcome.md",
-                "aRef": ""
+                "file": "OpenFOAM Structure.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "diff",
-              "title": "Diff: Welcome"
+              "icon": "lucide-file",
+              "title": "OpenFOAM Structure"
             }
           }
         ]
@@ -71,7 +71,23 @@
               "type": "bookmarks",
               "state": {},
               "icon": "lucide-bookmark",
-              "title": "Bookmarks"
+              "title": "书签"
+            }
+          }
+        ]
+      },
+      {
+        "id": "1db345bbe443c7ca",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f14218db84f7e478",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {},
+              "icon": "git-pull-request",
+              "title": "Source Control"
             }
           }
         ]
@@ -142,27 +158,17 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "OpenFOAM Structure.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
-            }
-          },
-          {
-            "id": "f14218db84f7e478",
-            "type": "leaf",
-            "state": {
-              "type": "git-view",
-              "state": {},
-              "icon": "git-pull-request",
-              "title": "Source Control"
+              "title": "OpenFOAM Structure 的大纲"
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -183,8 +189,8 @@
   "active": "27627d8be76a30b2",
   "lastOpenFiles": [
     "OpenFOAM Structure.md",
-    "Welcome.md",
     "Navier-Stokes Equations.md",
-    "Math.md"
+    "Math.md",
+    "Welcome.md"
   ]
 }
