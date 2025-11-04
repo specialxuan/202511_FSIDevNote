@@ -1,24 +1,20 @@
 {
   "main": {
-    "id": "5324373015726ba8",
+    "id": "5db02c6959b651d7",
     "type": "split",
     "children": [
       {
-        "id": "bf6c9e439b15c0bb",
+        "id": "7dc7ad1faf5dab62",
         "type": "tabs",
         "children": [
           {
-            "id": "0349f4e0f0358fb2",
+            "id": "e803ce6e22687f0c",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "OpenFOAM Structure.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "OpenFOAM Structure"
+              "title": "新标签页"
             }
           }
         ]
@@ -27,15 +23,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "901f7724dbcbe31f",
+    "id": "5fdf1e628805436b",
     "type": "split",
     "children": [
       {
-        "id": "aa87c49dea1d887e",
+        "id": "c792dbc47ce4117f",
         "type": "tabs",
         "children": [
           {
-            "id": "2088dc8d97222c92",
+            "id": "774ddacf29438a97",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -48,7 +44,7 @@
             }
           },
           {
-            "id": "b2d92c339f03f51b",
+            "id": "9f3569e9fda98cc0",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -65,7 +61,7 @@
             }
           },
           {
-            "id": "a0789b85adcc6f2f",
+            "id": "e7c761eff9f07fbe",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -75,42 +71,25 @@
             }
           }
         ]
-      },
-      {
-        "id": "618a323b49339b56",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "8c76f09298419dbe",
-            "type": "leaf",
-            "state": {
-              "type": "git-view",
-              "state": {},
-              "icon": "git-pull-request",
-              "title": "Source Control"
-            }
-          }
-        ]
       }
     ],
     "direction": "horizontal",
     "width": 300
   },
   "right": {
-    "id": "4e85e5233afeeba7",
+    "id": "6d03c735975c1beb",
     "type": "split",
     "children": [
       {
-        "id": "95da0a94853381cc",
+        "id": "e5b62322328ec7a4",
         "type": "tabs",
         "children": [
           {
-            "id": "775a5681df342fe6",
+            "id": "34dd002223aeb9dd",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "深度学习笔记/深度学习入门.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -120,25 +99,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "深度学习入门 的反向链接列表"
+              "title": "反向链接"
             }
           },
           {
-            "id": "d64e1c30863add20",
+            "id": "e3d4a306884b4ba6",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "深度学习笔记/深度学习入门.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "深度学习入门 的出链列表"
+              "title": "出链"
             }
           },
           {
-            "id": "20a90a771ede825e",
+            "id": "c2f0aa31e6999241",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -153,71 +131,37 @@
             }
           },
           {
-            "id": "744840c46aeb7d2e",
+            "id": "ae116df522245ddf",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "OpenFOAM Structure.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "OpenFOAM Structure 的大纲"
-            }
-          }
-        ],
-        "currentTab": 3
-      },
-      {
-        "id": "a93ae2e5dc54b00c",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "919547eee1c11415",
-            "type": "leaf",
-            "state": {
-              "type": "calendar",
-              "state": {},
-              "icon": "calendar-with-checkmark",
-              "title": "Calendar"
+              "title": "大纲"
             }
           }
         ]
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
-      "obsidian-git:Open Git source control": false,
       "switcher:打开快速切换": false,
       "graph:查看关系图谱": false,
       "canvas:新建白板": false,
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:创建新数据库": false,
-      "obsidian-kanban:创建新看板": false,
-      "homepage:Open homepage": false
+      "bases:创建新数据库": false
     }
   },
-  "active": "0349f4e0f0358fb2",
-  "lastOpenFiles": [
-    "Math.md",
-    "OpenFOAM Structure.md",
-    "Welcome.md",
-    "Navier-Stokes Equations.md",
-    "未命名.canvas",
-    "开源软件学习/OpenFOAM/OpenFOAM架构系统指南.md",
-    "开源软件学习/软件安装.md",
-    "开源软件学习/OpenFOAM/未命名",
-    "开源软件学习/OpenFOAM",
-    "开源软件学习/Gmsh.md",
-    "深度学习笔记/深度学习入门.md",
-    "文献阅读记录/PDE动网格方法.md",
-    "文献阅读记录"
-  ]
+  "active": "e803ce6e22687f0c",
+  "lastOpenFiles": []
 }

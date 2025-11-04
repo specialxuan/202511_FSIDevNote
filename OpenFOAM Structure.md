@@ -53,16 +53,16 @@ CFD的核心数据：
 
 源码是进行二次开发的地图。你的源码通常位于 `$WM_PROJECT_DIR` 环境变量指向的目录下。
 
-|**顶级目录**|**作用**|**耦合开发的重要性**|
-|---|---|---|
-|**`src`**|**核心库源码**。所有的底层数据结构、场、网格和数值方法实现。|**最高** (理解数据结构和方法)|
-|`src/OpenFOAM`|最底层基础类、IO和时间步进。||
-|`src/finiteVolume`|`fvMesh`, `fvSchemes`, `fvMatrix` 等有限体积实现。||
-|`src/turbulenceModels`|湍流模型，如 $k-\epsilon$。||
-|**`applications`**|**所有可执行程序**，包括求解器和工具。|**高** (你的二次开发将基于此)|
-|`applications/solvers`|所有的CFD求解器，如 `simpleFoam.C`。||
-|`applications/utilities`|所有的后处理和网格生成工具。||
-|**`tutorials`**|**官方示例**，学习如何设置算例和调用求解器。|**高** (参考算例配置)|
+| **顶级目录**                 | **作用**                                     | **耦合开发的重要性**       |
+| ------------------------ | ------------------------------------------ | ------------------ |
+| **`src`**                | **核心库源码**。所有的底层数据结构、场、网格和数值方法实现。           | **最高** (理解数据结构和方法) |
+| `src/OpenFOAM`           | 最底层基础类、IO和时间步进。                            |                    |
+| `src/finiteVolume`       | `fvMesh`, `fvSchemes`, `fvMatrix` 等有限体积实现。 |                    |
+| `src/turbulenceModels`   | 湍流模型，如 $k-\epsilon$。                       |                    |
+| **`applications`**       | **所有可执行程序**，包括求解器和工具。                      | **高** (你的二次开发将基于此) |
+| `applications/solvers`   | 所有的CFD求解器，如 `simpleFoam.C`。                |                    |
+| `applications/utilities` | 所有的后处理和网格生成工具。                             |                    |
+| **`tutorials`**          | **官方示例**，学习如何设置算例和调用求解器。                   | **高** (参考算例配置)     |
 
 ---
 
@@ -70,14 +70,14 @@ CFD的核心数据：
 
 所有的求解器（如 `simpleFoam`）都是对核心库的调用。它们的基本结构高度一致，代码通常在 `applications/solvers/.../<SolverName>.C` 中。
 
-|**阶段**|**核心包含文件/代码段**|**作用**|
-|---|---|---|
-|**初始化**|`#include "createMesh.H"`<br><br>  <br><br>`#include "createFields.H"`|读入网格、时间、物性、初始条件等，创建 $U, p, \phi$ 等场对象。|
-|**时间循环**|`while (runTime.loop()) { ... }`|控制时间步进。对于稳态求解器（如 `simpleFoam`），`runTime.loop()` 实际是迭代循环。|
-|**动量方程**|`fvVectorMatrix UEqn(...)`|**$U$ 求解。** 构造和求解动量方程，得到一个非耦合的 $U^*$。|
-|**压力泊松方程 (PPE)**|`fvScalarMatrix pEqn(...)`<br><br>  <br><br>`pEqn.solve();`|**$p$ 求解。** 构造并求解压力泊松方程，得到压力 $p$。|
-|**速度修正**|`U += fvc::grad(p) * rAU;`<br><br>  <br><br>`phi = ...`|使用新压力 $p$ 修正速度 $U$ 和面通量 $\phi$，使速度场满足连续性。|
-|**边界条件**|`U.correctBoundaryConditions();`|每次迭代后，更新边界上的场值。|
+| **阶段**           | **核心包含文件/代码段**                                                         | **作用**                                                   |
+| ---------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| **初始化**          | `#include "createMesh.H"`<br><br>  <br><br>`#include "createFields.H"` | 读入网格、时间、物性、初始条件等，创建 $U, p, \phi$ 等场对象。                   |
+| **时间循环**         | `while (runTime.loop()) { ... }`                                       | 控制时间步进。对于稳态求解器（如 `simpleFoam`），`runTime.loop()` 实际是迭代循环。 |
+| **动量方程**         | `fvVectorMatrix UEqn(...)`                                             | **$U$ 求解。** 构造和求解动量方程，得到一个非耦合的 $U^*$。                    |
+| **压力泊松方程 (PPE)** | `fvScalarMatrix pEqn(...)`<br><br>  <br><br>`pEqn.solve();`            | **$p$ 求解。** 构造并求解压力泊松方程，得到压力 $p$。                        |
+| **速度修正**         | `U += fvc::grad(p) * rAU;`<br><br>  <br><br>`phi = ...`                | 使用新压力 $p$ 修正速度 $U$ 和面通量 $\phi$，使速度场满足连续性。                |
+| **边界条件**         | `U.correctBoundaryConditions();`                                       | 每次迭代后，更新边界上的场值。                                          |
 
 > **提示：** 在OpenFOAM中，微分算子分为两类：
 > 
