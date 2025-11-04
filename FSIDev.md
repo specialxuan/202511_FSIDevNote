@@ -4,17 +4,240 @@
 
 ### 1.1 技术选型与版本确认
 
-- [ ] **确定组件版本**：
-  - [ ] OpenFOAM: `openfoam2412` (ESi版本，最新稳定版)
-  - [ ] preCICE: `v2.5.0` (稳定版)
-  - [ ] CalculiX: `2.20` 或 `ccx_2.21`
-  - [ ] 编译器: `gcc-13` (Ubuntu 24.04 默认)
-  - [ ] CMake: `3.28+` (Ubuntu 24.04 自带)
+- [x] **确定组件版本**：
+  - [x] OpenFOAM: `openfoam2412` (ESi版本，最新稳定版)
+  - [x] preCICE: `v3.2.0` (稳定版)
+  - [x] CalculiX: `2.20`
+  - [x] 编译器: `gcc-13` (Ubuntu 24.04 默认)
+  - [x] CMake: `3.28+` (Ubuntu 24.04 自带)
 - [ ] **选择基础 Docker 镜像**： `ubuntu:24.04` (Noble Numbat)
 
-## 阶段二：Docker 环境构建
 
-### 2.1 创建项目结构
+## 阶段二：核心组件安装
+
+### 2.1 系统级依赖安装
+
+- [x] **基础开发工具**：
+  - [x] `build-essential`, `cmake`, `git`, `wget`, `curl`，`pkg-config`
+  - [x] `gcc-13`, `g++-13`, `gfortran-13`
+  - [x] `python3-dev`, `python3-pip`, `python3-venv`
+- [x] **数学与并行库**：
+  - [x] `openmpi-bin`,`libarpack2-dev`,`libspooles-dev`,`libyaml-cpp-dev`
+
+### 2.2 OpenFOAM 2412 安装
+
+- [x] **使用apt安装OpenFOAM-v2412**：
+```bash
+curl -s https://dl.openfoam.com/add-debian-repo.sh | sudo bash
+wget -q -O - https://dl.openfoam.com/add-debian-repo.sh | sudo bash
+sudo apt-get install ca-certificates
+sudo apt-get update
+sudo apt-get install openfoam2412-default
+```
+
+- [x] **使用apt安装OpenFOAM-v13：
+	- 用于安装paraview，不参与preCICE耦合计算
+```bash
+sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
+sudo add-apt-repository http://dl.openfoam.org/ubuntu
+sudo apt update
+sudo apt -y install openfoam13
+```
+
+- [x] **配置 OpenFOAM 环境选择器**：
+  - [x] 在 `~/.bashrc` 中添加：（命令of13和of2412可以激活对应环境，cleanup_openfoam可以清除环境，其中of13还可以配置paraFoan路径）
+```bash
+# OpenFOAM Version Management
+# ===========================
+# OpenFOAM v2412 (ESI Official)
+of2412() {
+    # 清除可能存在的其他版本环境
+    if [ -n "$FOAM_API" ]; then
+        echo "Cleaning previous OpenFOAM environment..."
+        unset FOAM_API
+        cleanup_openfoam
+    fi
+    
+    # 加载 v2412
+    source /usr/lib/openfoam/openfoam2412/etc/bashrc
+    # 设置 ParaView 插件路径
+	export PV_PLUGIN_PATH="/opt/openfoam13/platforms/linux64GccDPInt32Opt/lib/paraview-5.11"
+    export PS1="\[\033[01;32m\](OF2412)\[\033[00m\] \u@\h:\w\$ "
+    echo "OpenFOAM v2412 (ESI) activated"
+}
+
+# OpenFOAM 13 (Foundation)
+of13() {
+    # 清除可能存在的其他版本环境
+    if [ -n "$FOAM_API" ]; then
+        echo "Cleaning previous OpenFOAM environment..."
+        unset FOAM_API
+        cleanup_openfoam
+    fi
+    
+    # 加载 13
+    source /opt/openfoam13/etc/bashrc
+    export PS1="\[\033[01;34m\](OF13)\[\033[00m\] \u@\h:\w\$ "
+    echo "OpenFOAM 13 (Foundation) activated"
+}
+
+# 清理函数
+cleanup_openfoam() {
+    # 移除常见的OpenFOAM环境变量
+    unset WM_PROJECT WM_PROJECT_VERSION WM_PROJECT_DIR
+    unset WM_THIRD_PARTY_DIR FOAM_INST_DIR FOAM_RUN
+    # 重置PATH和LD_LIBRARY_PATH（简化版）
+    export PATH=$(echo $PATH | sed 's|:/opt/openfoam[^:]*/platforms/[^:]*/bin||g')
+    export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed 's|:/opt/openfoam[^:]*/platforms/[^:]*/lib||g')
+	# 清理PS1提示符格式 - 恢复默认
+	export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+}
+```
+
+### 2.3 preCICE 安装与配置
+
+- [x] **安装 preCICE：**
+
+```bash
+ wget https://github.com/precice/precice/releases/download/v3.2.0/libprecice3_3.2.0_noble.deb
+ sudo apt install ./libprecice3_3.2.0_noble.deb
+```
+
+- [x] **安装OpenFOAM-preCICE adapter:**
+
+```bash
+  wget https://github.com/precice/openfoam-adapter/archive/refs/tags/v1.3.1.tar.gz
+  tar -xzf v1.3.1.tar.gz 
+  cd openfoam-adapter-1.3.1/
+  ./Allwmake
+  cd ..
+```
+
+- [x] **验证安装**：
+ ![[QuickStart_preCICE.png]]
+
+  - [x] 配置单元测试：
+```bash
+ # 下载preCICE教程算例
+ wget https://github.com/precice/tutorials/archive/refs/tags/v202404.0.tar.gz
+ tar -xzf v202404.0.tar.gz
+ cd tutorials-202404.0/quickstart
+ cd tutorials/quickstart/solid-cpp
+cmake . && make
+```
+  - [x] 运行单元测试：
+```bash
+# Terminal window 1
+cd tutorials/quickstart/solid-cpp
+./run.sh
+
+# Terminal window 2
+of2412
+cd tutorials/quickstart/fluid-openfoam
+./run.sh
+# Alternative, in parallel: ./run.sh -parallel
+```
+
+### 2.4 CalculiX 安装与配置
+
+- [x] **下载CalculiX源码：**
+
+```bash
+cd ~
+wget http://www.dhondt.de/ccx_2.20.src.tar.bz2
+tar xvjf ccx_2.20.src.tar.bz2
+```
+- [x] **编译适配器：**
+  - [x] 下载适配器源码
+```bash
+cd ~
+wget http://www.dhondt.de/ccx_2.20.src.tar.bz2
+tar xvjf ccx_2.20.src.tar.bz2
+```
+  - [x] 修改`Makefile`
+```make
+# 删除
+FFLAGS = -Wall -O3 -fopenmp $(INCLUDES)
+# 添加
+FFLAGS = -Wall -O3 -fopenmp -fallow-argument-mismatch $(INCLUDES)
+```
+  - [x] 编译
+```bash
+make clean
+make
+#移动ccx到系统路径下
+sudo cp ./ccx_preCICE /usr/bin/
+```
+
+## 阶段三：测试用例搭建
+
+### 3.1 准备 FSI 测试案例
+
+- [x] **选择标准测试案例(Perpendicular flap)：**
+![[QuickStart_FSI.png]]
+  - [x] OpenFOAM 端：二维管流
+  - [x] CalculiX 端：弹性体变形
+
+### 3.2 案例文件结构
+
+- [x] **组织案例目录**：
+
+```bash
+./
+├── clean-tutorial.sh -> ../tools/clean-tutorial-base.sh
+├── fluid-openfoam
+│   ├── 0
+│   ├── clean.sh
+│   ├── constant
+│   ├── run.sh
+│   └── system
+├── metadata.yaml
+├── plot-all-displacements.sh
+├── plot-displacement.sh
+├── precice-config.xml
+├── README.md
+├── reference-results
+├── reference_results.metadata
+└── solid-calculix
+    ├── all.msh
+    ├── clean.sh
+    ├── config.yml
+    ├── fix1_beam.nam
+    ├── flap.inp
+    ├── flap_modal.inp
+    ├── frequency.inp
+    ├── interface_beam.nam
+    └── run.sh
+```
+
+| **文件/目录**                        | **类型**   | **解释**                                                                                    |
+| -------------------------------- | -------- | ----------------------------------------------------------------------------------------- |
+| **`clean-tutorial.sh`**          | 脚本链接     | 用于**清理整个算例目录**的脚本链接。它会调用 preCICE 教程工具目录中的基础清理脚本，移除所有求解器生成的中间文件和结果文件。                      |
+| **`fluid-openfoam`**             | 目录       | **流体（OpenFOAM）参与者** 的所有文件和配置。OpenFOAM 求解器的标准目录结构（`0`, `constant`, `system`）位于其下。          |
+| **`metadata.yaml`**              | 配置文件     | 包含算例的元数据信息，如作者、版本、许可证等。供 preCICE 官方教程管理使用。                                                |
+| **`plot-all-displacements.sh`**  | Bash 脚本  | **后处理脚本。** 用于绘制和比较不同求解器组合下的挡板尖端位移结果（例如，OpenFOAM+CalculiX vs. OpenFOAM+FEniCS）。            |
+| **`plot-displacement.sh`**       | Bash 脚本  | **后处理脚本。** 用于绘制选定固体参与者（如 `solid-calculix`）的挡板尖端位移（`watchpoint` 监测点）随时间变化的曲线图。             |
+| **`precice-config.xml`**         | XML 配置文件 | **preCICE 耦合的核心配置文件。** 定义了流体和固体参与者、它们之间的数据交换（力、位移）、接口（耦合面）、时间步长、以及耦合方案（例如，显式或隐式、数据映射方式等）。 |
+| **`README.md`**                  | 文本文件     | 包含算例的**基本介绍、设置、配置和运行说明**。这是您现在阅读的指南文档。                                                    |
+| **`reference-results`**          | 目录       | 包含该算例的**参考结果**文件（通常是 `watchpoint` 日志或绘图数据），用于用户验证自己的模拟结果是否正确。                             |
+| **`reference_results.metadata`** | 配置文件     | 描述参考结果文件的元数据。                                                                             |
+| **`solid-calculix`**             | 目录       | **固体（CalculiX）参与者** 的所有文件和配置。                                                             |
+- [x] **运行算例**
+```bash
+# Terminal window 1
+of2412
+cd tutorials/perpendicular-flap/fluid-openfoam
+./run.sh
+# Alternative, in parallel: ./run.sh -parallel
+
+# Terminal window 2
+cd tutorials/perpendicular-flap/solid-calculix
+./run.sh
+```
+
+## 阶段四：Docker 环境构建
+
+### 4.1 创建项目结构
 
 - [ ] **创建项目根目录**： `fsi-dev-container/`
 - [ ] **初始化子目录**：
@@ -40,7 +263,7 @@ fsi-dev-container/
     └── tasks.json
 ```
 
-### 2.2 配置 Dev Container
+### 4.2 配置 Dev Container
 
 - [ ] **创建 `.devcontainer/devcontainer.json`**：
   - [ ] 定义多阶段构建或服务组合
@@ -54,79 +277,9 @@ fsi-dev-container/
   - [ ] 定义 OpenFOAM 服务
   - [ ] 定义测试用例服务
 
-## 阶段三：核心组件安装
+## 阶段五：开发环境配置
 
-### 3.1 系统级依赖安装
-
-- [ ] **基础开发工具**：
-  - [ ] `build-essential`, `cmake`, `git`, `wget`, `curl`
-  - [ ] `gcc-13`, `g++-13`, `gfortran-13`
-  - [ ] `python3-dev`, `python3-pip`, `python3-venv`
-- [ ] **数学与并行库**：
-  - [ ] `openmpi-bin`, `libopenmpi-dev`
-  - [ ] `libboost-all-dev`
-  - [ ] `libeigen3-dev`
-  - [ ] `libscotch-dev`, `libparmetis-dev`
-
-### 3.2 OpenFOAM 2412 安装
-
-- [ ] **添加 OpenFOAM 官方仓库**：
-
-```bash
-# 添加 OpenFOAM 官方 GPG 密钥和仓库
-sudo sh -c "wget -O - http://dl.openfoam.org/gpg.key | apt-key add -"
-sudo add-apt-repository http://dl.openfoam.org/ubuntu
-sudo apt-get update
-```
-
-- [ ] **安装 OpenFOAM 2412**：
-  - [ ] `sudo apt-get install openfoam2412-dev`
-  - [ ] 或 `sudo apt-get install openfoam2412`
-- [ ] **配置 OpenFOAM 环境**：
-  - [ ] 在 `~/.bashrc` 中添加：`source /usr/lib/openfoam/openfoam2412/etc/bashrc`
-  - [ ] 验证：`simpleFoam -help`
-  - [ ] 检查 `WM_PROJECT_DIR` 环境变量
-
-### 3.3 preCICE 安装与配置
-
-- [ ] **下载 preCICE 源码**：
-
-```bash
-git clone https://github.com/precice/precice.git
-cd precice && git checkout v2.5.0
-```
-
-- [ ] **编译安装**：
-  - [ ] 创建构建目录： `build`
-  - [ ] 配置 CMake： `-DPETSc=OFF -DMPI=ON -DBUILD_SHARED_LIBS=ON`
-  - [ ] 编译： `make -j$(nproc)`
-  - [ ] 安装： `sudo make install`
-- [ ] **验证安装**：
-  - [ ] `pkg-config --modversion precice`
-  - [ ] 运行单元测试： `ctest --output-on-failure`
-
-### 3.4 OpenFOAM 适配器集成
-
-- [ ] **安装 OpenFOAM 适配器**：
-  - [ ] 下载最新 `precice-openfoam-adapter`
-  - [ ] 配置适配器指向 OpenFOAM 2412 安装目录
-  - [ ] 编译并与 preCICE 链接
-- [ ] **验证适配器**：
-  - [ ] 检查 `preciceAdapter` 可执行文件
-  - [ ] 运行基础功能测试
-
-### 3.5 CalculiX 安装与配置
-
-- [ ] **安装 CalculiX**：
-  - [ ] 通过 `apt` 安装： `calculix-ccx`, `calculix-cgx`
-  - [ ] 或从源码编译最新版本
-- [ ] **验证安装**：
-  - [ ] `ccx -version`
-  - [ ] `cgx -version`
-
-## 阶段四：开发环境配置
-
-### 4.1 VS Code 工作区配置
+### 5.1 VS Code 工作区配置
 
 - [ ] **创建 `.vscode/settings.json`**：
   - [ ] 配置 C++ 标准 (C++17)
@@ -139,7 +292,7 @@ cd precice && git checkout v2.5.0
   - [ ] 配置 C/C++ 调试器
   - [ ] 设置 FSI 耦合过程调试
 
-### 4.2 环境验证脚本
+### 5.2 环境验证脚本
 
 - [ ] **创建验证脚本**：
   - [ ] `scripts/verify_installation.sh`
@@ -168,41 +321,6 @@ ccx -version
 echo "=== 环境验证完成 ==="
 ```
 
-## 阶段五：测试用例搭建
-
-### 5.1 准备 FSI 测试案例
-
-- [ ] **选择标准测试案例**：
-  - [ ] OpenFOAM 端：管流或空腔流
-  - [ ] CalculiX 端：弹性体变形
-- [ ] **配置 preCICE 耦合**：
-  - [ ] 创建 `precice-config.xml`
-  - [ ] 定义耦合接口和数据交换
-
-### 5.2 案例文件结构
-
-- [ ] **组织案例目录**：
-
-```bash
-cases/tutorial-fsi/
-├── openfoam/
-│   ├── system/
-│   │   ├── controlDict
-│   │   ├── fvSchemes
-│   │   └── fvSolution
-│   ├── constant/
-│   │   ├── polyMesh/
-│   │   └── transportProperties
-│   └── 0/
-│       ├── U
-│       ├── p
-│       └── k
-├── calculix/
-│   ├── model.inp
-│   └── material.dat
-└── precice-config.xml
-```
-
 ## 阶段六：开发工作流建立
 
 ### 6.1 容器内开发流程
@@ -223,26 +341,9 @@ cases/tutorial-fsi/
   - [ ] 设置 OpenFOAM 求解器调试
   - [ ] 配置耦合过程监控
 
-## 阶段七：Ubuntu 24.04 特定优化
+## 阶段七：验证与测试
 
-### 7.1 利用新版本特性
-
-- [ ] **使用更新的工具链**：
-  - [ ] GCC 13 的优化特性
-  - [ ] CMake 3.28+ 的新功能
-- [ ] **性能优化**：
-  - [ ] 利用 Ubuntu 24.04 的内核优化
-  - [ ] 配置适当的 CPU 调度策略
-
-### 7.2 包管理优化
-
-- [ ] **利用 Ubuntu 24.04 的软件包**：
-  - [ ] 使用更新的 MPI 实现
-  - [ ] 利用系统级数学库优化
-
-## 阶段八：验证与测试
-
-### 8.1 组件集成测试
+### 7.1 组件集成测试
 
 - [ ] **独立组件测试**：
   - [ ] OpenFOAM 2412: `simpleFoam` 空腔流
@@ -252,7 +353,7 @@ cases/tutorial-fsi/
   - [ ] 数据传输正确性
   - [ ] 并行计算验证
 
-### 8.2 完整 FSI 流程测试
+### 7.2 完整 FSI 流程测试
 
 - [ ] **运行完整案例**：
   - [ ] 启动 OpenFOAM 求解器
@@ -262,9 +363,9 @@ cases/tutorial-fsi/
   - [ ] 物理合理性检查
   - [ ] 与基准案例对比
 
-## 阶段九：文档与维护
+## 阶段八：文档与维护
 
-### 9.1 项目文档
+### 8.1 项目文档
 
 - [ ] **编写使用说明**：
   - [ ] Ubuntu 24.04 特定配置
@@ -274,7 +375,7 @@ cases/tutorial-fsi/
   - [ ] Ubuntu 24.04 常见问题
   - [ ] OpenFOAM 2412 适配问题
 
-### 9.2 维护计划
+### 8.2 维护计划
 
 - [ ] **更新策略**：
   - [ ] OpenFOAM 版本更新跟踪
@@ -283,106 +384,34 @@ cases/tutorial-fsi/
   - [ ] 重要配置备份
   - [ ] 案例数据管理
 
-## 阶段十：共享开发文档笔记库建立
+## 阶段九：共享开发文档笔记库建立
 
-### 10.1 Obsidian + Git 知识库搭建
+### 9.1 Obsidian + Git 知识库搭建
 
-- [ ] **初始化 Obsidian 知识库**：
-  - [ ] 创建 `docs/` 目录作为知识库根目录
-  - [ ] 初始化 Git 仓库：`git init`
-  - [ ] 配置 `.gitignore` 排除临时文件
+- [x] **初始化 Obsidian 知识库**：
+  - [x] 创建 `docs/` 目录作为知识库根目录
+  - [x] 初始化 Git 仓库：`git init`
+  - [x] 配置 `.gitignore` 排除临时文件
 
-```bash
-fsi-dev-container/
-├── docs/                           # Obsidian 知识库
-│   ├── .obsidian/                 # Obsidian 配置
-│   ├── 01-项目概述/
-│   │   ├── 项目介绍.md
-│   │   ├── 技术架构.md
-│   │   └── 开发团队.md
-│   ├── 02-环境搭建/
-│   │   ├── 系统要求.md
-│   │   ├── 安装指南.md
-│   │   └── 环境验证.md
-│   ├── 03-开发指南/
-│   │   ├── OpenFOAM开发.md
-│   │   ├── preCICE配置.md
-│   │   └️── CalculiX集成.md
-│   ├── 04-案例库/
-│   │   ├── 基础案例/
-│   │   ├── 进阶案例/
-│   │   └── 故障排除.md
-│   ├── 05-会议记录/
-│   │   ├── 周会记录/
-│   │   └── 技术讨论/
-│   └── 06-参考资料/
-│       ├── 官方文档链接.md
-│       └️── 论文收集.md
-```
 
-- [ ] **配置 Obsidian 工作区**：
-  - [ ] 安装核心插件：日记、模板、反向链接、图谱
-  - [ ] 配置主题和外观（如需要）
-  - [ ] 设置默认笔记位置和链接方式
 
-- [ ] **建立文档模板系统**：
-  - [ ] 创建会议记录模板
-  - [ ] 创建技术问题记录模板
-  - [ ] 创建案例文档模板
+- [x] **配置 Obsidian 工作区**：
+  - [x] 安装核心插件：日记、模板、反向链接、图谱
+  - [x] 配置主题和外观（如需要）
+  - [x] 设置默认笔记位置和链接方式
 
-### 10.2 Git 协作流程配置
+### 9.2 Git 协作流程配置
 
-- [ ] **配置 Git 仓库**：
-  - [ ] 设置远程仓库（GitHub/GitLab/Gitee）
+- [x] **配置 Git 仓库**：
+  - [x] 设置远程仓库（GitHub/GitLab/Gitee）
   - [ ] 配置分支保护规则
   - [ ] 设置协作权限
 
-- [ ] **建立 Git 工作流**：
-  - [ ] 主分支：`main`（稳定版本）
+- [x] **建立 Git 工作流**：
+  - [x] 主分支：`main`（稳定版本）
   - [ ] 开发分支：`develop`（集成开发）
   - [ ] 功能分支：`feature/*`（新功能开发）
   - [ ] 文档分支：`docs/*`（文档更新）
-
-- [ ] **配置 Git Hooks**：
-  - [ ] 预提交检查：Markdown 格式验证
-  - [ ] 自动生成文档索引
-  - [ ] 备份重要配置
-
-### 10.3 文档标准化与自动化
-
-- [ ] **建立文档规范**：
-  - [ ] Markdown 写作规范
-  - [ ] 文件命名约定
-  - [ ] 目录结构标准
-
-- [ ] **配置自动化脚本**：
-  - [ ] 自动生成目录树：`scripts/generate_toc.sh`
-  - [ ] 文档链接检查：`scripts/check_links.py`
-  - [ ] 定期备份脚本：`scripts/backup_docs.sh`
-
-### 10.4 团队协作配置
-
-- [ ] **设置协作规则**：
-  - [ ] 文档更新流程
-  - [ ] 代码审查机制
-  - [ ] 冲突解决方案
-
-- [ ] **配置同步机制**：
-  - [ ] 定期同步提醒
-  - [ ] 变更通知流程
-  - [ ] 版本发布流程
-
-### 10.5 知识库维护
-
-- [ ] **定期维护任务**：
-  - [ ] 清理过期文档
-  - [ ] 更新链接和引用
-  - [ ] 优化文档结构
-
-- [ ] **质量保证**：
-  - [ ] 文档审查机制
-  - [ ] 用户反馈收集
-  - [ ] 持续改进流程
 
 ---
 
