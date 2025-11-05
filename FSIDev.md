@@ -12,7 +12,6 @@
   - [x] CMake: `3.28+` (Ubuntu 24.04 自带)
 - [ ] **选择基础 Docker 镜像**： `ubuntu:24.04` (Noble Numbat)
 
-
 ## 阶段二：核心组件安装
 
 ### 2.1 系统级依赖安装
@@ -26,7 +25,8 @@
 
 ### 2.2 OpenFOAM 2412 安装
 
-- [x] **使用apt安装OpenFOAM-v2412**：
+- [x] **使用apt安装OpenFOAM-v2412：**
+
 ```bash
 curl -s https://dl.openfoam.com/add-debian-repo.sh | sudo bash
 wget -q -O - https://dl.openfoam.com/add-debian-repo.sh | sudo bash
@@ -35,8 +35,9 @@ sudo apt-get update
 sudo apt-get install openfoam2412-default
 ```
 
-- [x] **使用apt安装OpenFOAM-v13：
-	- 用于安装paraview，不参与preCICE耦合计算
+- [x] **使用apt安装OpenFOAM-v13：**
+  - 用于安装paraview，不参与preCICE耦合计算
+
 ```bash
 sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
 sudo add-apt-repository http://dl.openfoam.org/ubuntu
@@ -44,8 +45,11 @@ sudo apt update
 sudo apt -y install openfoam13
 ```
 
-- [x] **配置 OpenFOAM 环境选择器**：
-  - [x] 在 `~/.bashrc` 中添加：（命令of13和of2412可以激活对应环境，cleanup_openfoam可以清除环境，其中of13还可以配置paraFoan路径）
+- [x] **配置 OpenFOAM 环境选择器：**
+  - [x] 在 `~/.bashrc` 中添加：
+    - 命令of13和of2412可以激活对应环境，cleanup_openfoam可以清除环境
+    - of2412使用of13的paraFoam路径
+
 ```bash
 # OpenFOAM Version Management
 # ===========================
@@ -61,7 +65,7 @@ of2412() {
     # 加载 v2412
     source /usr/lib/openfoam/openfoam2412/etc/bashrc
     # 设置 ParaView 插件路径
-	export PV_PLUGIN_PATH="/opt/openfoam13/platforms/linux64GccDPInt32Opt/lib/paraview-5.11"
+    export PV_PLUGIN_PATH="/opt/openfoam13/platforms/linux64GccDPInt32Opt/lib/paraview-5.11"
     export PS1="\[\033[01;32m\](OF2412)\[\033[00m\] \u@\h:\w\$ "
     echo "OpenFOAM v2412 (ESI) activated"
 }
@@ -89,12 +93,12 @@ cleanup_openfoam() {
     # 重置PATH和LD_LIBRARY_PATH（简化版）
     export PATH=$(echo $PATH | sed 's|:/opt/openfoam[^:]*/platforms/[^:]*/bin||g')
     export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed 's|:/opt/openfoam[^:]*/platforms/[^:]*/lib||g')
-	# 清理PS1提示符格式 - 恢复默认
-	export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    # 清理PS1提示符格式 - 恢复默认
+    export PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 }
 ```
 
-### 2.3 preCICE 安装与配置
+### 2.3 preCICE 安装
 
 - [x] **安装 preCICE：**
 
@@ -113,10 +117,10 @@ cleanup_openfoam() {
   cd ..
 ```
 
-- [x] **验证安装**：
+- [x] **配置单元测试：**
+
  ![[QuickStart_preCICE.png]]
 
-  - [x] 配置单元测试：
 ```bash
  # 下载preCICE教程算例
  wget https://github.com/precice/tutorials/archive/refs/tags/v202404.0.tar.gz
@@ -125,7 +129,9 @@ cleanup_openfoam() {
  cd tutorials/quickstart/solid-cpp
 cmake . && make
 ```
-  - [x] 运行单元测试：
+  
+- [x] **运行单元测试：**
+
 ```bash
 # Terminal window 1
 cd tutorials/quickstart/solid-cpp
@@ -147,21 +153,26 @@ cd ~
 wget http://www.dhondt.de/ccx_2.20.src.tar.bz2
 tar xvjf ccx_2.20.src.tar.bz2
 ```
-- [x] **编译适配器：**
-  - [x] 下载适配器源码
+
+- [x] **下载适配器源码：**
+
 ```bash
 cd ~
 wget http://www.dhondt.de/ccx_2.20.src.tar.bz2
 tar xvjf ccx_2.20.src.tar.bz2
 ```
-  - [x] 修改`Makefile`
+
+- [x] **修改`Makefile`：**
+
 ```make
 # 删除
 FFLAGS = -Wall -O3 -fopenmp $(INCLUDES)
 # 添加
 FFLAGS = -Wall -O3 -fopenmp -fallow-argument-mismatch $(INCLUDES)
 ```
-  - [x] 编译
+
+- [x] **编译`ccx_preCICE`**
+
 ```bash
 make clean
 make
@@ -222,7 +233,9 @@ sudo cp ./ccx_preCICE /usr/bin/
 | **`reference-results`**          | 目录       | 包含该算例的**参考结果**文件（通常是 `watchpoint` 日志或绘图数据），用于用户验证自己的模拟结果是否正确。                             |
 | **`reference_results.metadata`** | 配置文件     | 描述参考结果文件的元数据。                                                                             |
 | **`solid-calculix`**             | 目录       | **固体（CalculiX）参与者** 的所有文件和配置。                                                             |
+
 - [x] **运行算例**
+
 ```bash
 # Terminal window 1
 of2412
@@ -277,49 +290,58 @@ fsi-dev-container/
   - [ ] 定义 OpenFOAM 服务
   - [ ] 定义测试用例服务
 
-## 阶段五：开发环境配置
+## 阶段五：VS Code + CMake 开发环境配置
 
-### 5.1 VS Code 工作区配置
+### 5.1 项目源码结构规划
 
-- [ ] **创建 `.vscode/settings.json`**：
-  - [ ] 配置 C++ 标准 (C++17)
-  - [ ] 设置默认编译器路径
-  - [ ] 配置 CMake 构建目录
-- [ ] **创建 `.vscode/tasks.json`**：
-  - [ ] 定义 preCICE 构建任务
-  - [ ] 定义测试用例运行任务
-- [ ] **创建 `.vscode/launch.json`**：
-  - [ ] 配置 C/C++ 调试器
-  - [ ] 设置 FSI 耦合过程调试
+- [ ]  **创建 CMake 风格的源码目录**：
+  - [ ]  在 `src/` 下建立 `openfoam-solver/`、`custom-adapter/`、`test-coupling/` 等子模块目录
+  - [ ]  为每个子模块预留 `CMakeLists.txt` 和源文件位置
+- [ ]  **设计顶层 CMake 项目结构**：
+  - [ ]  确定是否将 OpenFOAM 求解器、preCICE 接口、测试程序统一纳入 CMake 管理
 
-### 5.2 环境验证脚本
+### 5.2 CMake 构建系统配置
 
-- [ ] **创建验证脚本**：
-  - [ ] `scripts/verify_installation.sh`
-  - [ ] 检查所有组件版本
-  - [ ] 测试基础功能
+- [ ]  **配置顶层 `CMakeLists.txt`**：
+  - [ ]  设置 C++17 标准和编译器要求
+  - [ ]  集成 OpenFOAM 环境变量与库路径检测逻辑
+  - [ ]  调用 `find_package(precice REQUIRED)` 确保 preCICE 可发现
+  - [ ]  添加子目录（求解器、适配器、测试）
+- [ ]  **为各子模块编写 `CMakeLists.txt`**：
+  - [ ]  配置 OpenFOAM 自定义求解器的头文件包含路径和链接库
+  - [ ]  链接 `precice::precice` 目标
+  - [ ]  设置可执行文件输出与安装路径（如 `$FOAM_USER_APPBIN`）
 
-```bash
-#!/bin/bash
-# scripts/verify_installation.sh
+### 5.3 VS Code 工作区设置
 
-echo "=== FSI 环境验证 ==="
+- [ ]  **配置 `.vscode/settings.json`**：
+  - [ ]  指定 CMake 源码与构建目录
+  - [ ]  设置默认 C++ 标准为 C++17
+  - [ ]  指定编译器路径为 `g++-13`
+  - [ ]  启用 `compile_commands.json` 支持
+- [ ]  **配置 CMake Kits（可选）**：
+  - [ ]  创建 `.vscode/cmake-kits.json`，定义 GCC 13 编译器及 OpenFOAM 环境变量
+- [ ]  **配置构建任务**：
+  - [ ]  在 `.vscode/tasks.json` 中定义 CMake 配置与构建任务
+  - [ ]  添加运行 FSI 测试案例的复合任务
 
-# 检查 OpenFOAM
-echo "1. 检查 OpenFOAM 2412..."
-source /usr/lib/openfoam/openfoam2412/etc/bashrc
-foamInstallationTest
+### 5.4 调试环境配置
 
-# 检查 preCICE
-echo "2. 检查 preCICE..."
-pkg-config --modversion precice
+- [ ]  **配置 `.vscode/launch.json`**：
+  - [ ]  添加针对自定义 OpenFOAM 求解器的 GDB 调试配置
+  - [ ]  设置工作目录、命令行参数（如 `-case`）和环境变量（`WM_PROJECT_DIR` 等）
+  - [ ]  关联预构建任务，确保调试前自动编译
+- [ ]  **验证调试能力**：
+  - [ ]  能在 VS Code 中设置断点、单步执行、查看变量（尤其 preCICE 数据交换部分）
 
-# 检查 CalculiX
-echo "3. 检查 CalculiX..."
-ccx -version
+### 5.5 开发环境验证
 
-echo "=== 环境验证完成 ==="
-```
+- [ ]  **执行端到端构建测试**：
+  - [ ]  在 `of2412` 环境下，使用 CMake 成功构建自定义求解器
+  - [ ]  验证生成的可执行文件可被 OpenFOAM 案例调用
+- [ ]  **集成验证脚本**：
+  - [ ]  更新 `scripts/verify_installation.sh`，加入 CMake 项目构建与基本运行测试
+  - [ ]  确保脚本可在 Dev Container 或本地一致运行
 
 ## 阶段六：开发工作流建立
 
@@ -392,8 +414,6 @@ echo "=== 环境验证完成 ==="
   - [x] 创建 `docs/` 目录作为知识库根目录
   - [x] 初始化 Git 仓库：`git init`
   - [x] 配置 `.gitignore` 排除临时文件
-
-
 
 - [x] **配置 Obsidian 工作区**：
   - [x] 安装核心插件：日记、模板、反向链接、图谱
