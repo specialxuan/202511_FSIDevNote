@@ -4,13 +4,14 @@
 
 ### 1.1 技术选型与版本确认
 
+- [x] **确定操作系统版本**： `Ubuntu 24.04 LTS` (Noble Numbat)
 - [x] **确定组件版本**：
   - [x] OpenFOAM: `openfoam2412` (ESi 版本，最新稳定版)
   - [x] preCICE: `v3.2.0` (稳定版)
   - [x] CalculiX: `2.20`
   - [x] 编译器: `gcc-13` (Ubuntu 24.04 默认)
   - [x] CMake: `3.28+` (Ubuntu 24.04 自带)
-- [ ] **选择基础 Docker 镜像**： `ubuntu:24.04` (Noble Numbat)
+- [x] **选择基础 Docker 镜像**： `ubuntu:24.04` (Noble Numbat)
 
 ## 阶段二：核心组件安装
 
@@ -103,18 +104,20 @@ cleanup_openfoam() {
 - [x] **安装 preCICE：**
 
 ```bash
- wget https://github.com/precice/precice/releases/download/v3.2.0/libprecice3_3.2.0_noble.deb
- sudo apt install ./libprecice3_3.2.0_noble.deb
+cd ~
+wget https://github.com/precice/precice/releases/download/v3.2.0/libprecice3_3.2.0_noble.deb
+sudo apt install ./libprecice3_3.2.0_noble.deb
 ```
 
 - [x] **安装 OpenFOAM-preCICE adapter:**
 
 ```bash
-  wget https://github.com/precice/openfoam-adapter/archive/refs/tags/v1.3.1.tar.gz
-  tar -xzf v1.3.1.tar.gz
-  cd openfoam-adapter-1.3.1/
-  ./Allwmake
-  cd ..
+cd ~
+wget https://github.com/precice/openfoam-adapter/archive/refs/tags/v1.3.1.tar.gz
+tar -xzf v1.3.1.tar.gz
+cd openfoam-adapter-1.3.1/
+./Allwmake
+cd ..
 ```
 
 - [x] **配置单元测试：**
@@ -122,11 +125,11 @@ cleanup_openfoam() {
 ![[QuickStart_preCICE.png]]
 
 ```bash
- # 下载preCICE教程算例
- wget https://github.com/precice/tutorials/archive/refs/tags/v202404.0.tar.gz
- tar -xzf v202404.0.tar.gz
- cd tutorials-202404.0/quickstart
- cd tutorials/quickstart/solid-cpp
+cd ~
+# 下载preCICE教程算例
+wget https://github.com/precice/tutorials/archive/refs/tags/v202404.0.tar.gz
+tar -xzf v202404.0.tar.gz
+cd ~/tutorials-202404.0/quickstart/solid-cpp
 cmake . && make
 ```
 
@@ -134,12 +137,12 @@ cmake . && make
 
 ```bash
 # Terminal window 1
-cd tutorials/quickstart/solid-cpp
+cd ~/tutorials-202404.0/quickstart/solid-cpp
 ./run.sh
 
 # Terminal window 2
 of2412
-cd tutorials/quickstart/fluid-openfoam
+cd ~/tutorials-202404.0/quickstart/fluid-openfoam
 ./run.sh
 # Alternative, in parallel: ./run.sh -parallel
 ```
@@ -158,8 +161,9 @@ tar xvjf ccx_2.20.src.tar.bz2
 
 ```bash
 cd ~
-wget http://www.dhondt.de/ccx_2.20.src.tar.bz2
-tar xvjf ccx_2.20.src.tar.bz2
+wget https://github.com/precice/calculix-adapter/archive/refs/heads/master.tar.gz
+tar -xzf master.tar.gz
+cd calculix-adapter-master
 ```
 
 - [x] **修改`Makefile`：**
@@ -177,7 +181,7 @@ FFLAGS = -Wall -O3 -fopenmp -fallow-argument-mismatch $(INCLUDES)
 make clean
 make
 #移动ccx到系统路径下
-sudo cp ./ccx_preCICE /usr/bin/
+sudo cp ./bin/ccx_preCICE /usr/bin/
 ```
 
 ## 阶段三：测试用例搭建
@@ -188,11 +192,15 @@ sudo cp ./ccx_preCICE /usr/bin/
   - [x] OpenFOAM 端：二维管流
   - [x] CalculiX 端：弹性体变形
 
+```bash
+cd ~/tutorials-202404.0/perpendicular-flap
+```
+
 ![[QuickStart_FSI.png]]
 
 ### 3.2 案例文件结构
 
-- [x] **组织案例目录**：
+- [x] **组织案例目录：**
 
 ```bash
 ./
@@ -251,33 +259,44 @@ cd tutorials/perpendicular-flap/solid-calculix
 
 ## 阶段四：Docker 环境构建
 
-### 4.1 创建项目结构
+### 4.1.1 基础 Docker 镜像准备
 
-- [ ] **创建项目根目录**： `fsi-dev-container/`
-- [ ] **初始化子目录**：
+- [x] **安装 Docker（Linux）或者 Docker Desktop（Windows/Mac）:**
+  - 配置镜像源（镜像源可能失效，请根据实际情况调整）：
 
-```bash
-fsi-dev-container/
-├── .devcontainer/
-│   ├── devcontainer.json
-│   ├── Dockerfile
-│   └── docker-compose.yml
-├── scripts/
-│   ├── install_dependencies.sh
-│   ├── build_precice.sh
-│   └── build_calculix.sh
-├── cases/
-│   ├── openfoam-case/
-│   └── calculix-case/
-├── src/
-│   ├── openfoam-solver/
-│   └── custom-adapter/
-└── .vscode/
-    ├── settings.json
-    └── tasks.json
+```json
+{
+  "registry-mirrors": ["https://docker.xuanyuan.me", "https://docker.1ms.run"]
+}
 ```
 
-### 4.2 配置 Dev Container
+- [x] **拉取基础镜像：**
+
+```bash
+docker pull ubuntu:24.04
+```
+
+- [x] **按照阶段二到阶段三的步骤，安装所有依赖和组件，验证测试案例可运行**
+  - 可以不安装`OpenFOAM13`，也就是不安装`ParaView`
+- [x] **创建 Docker 镜像：**
+
+```bash
+docker commit <container_id> fsi-dev:ubuntu24.04-of2412
+```
+
+- [x] **导出 Docker 镜像为 tar 文件（可选）：**
+
+```bash
+docker save -o fsi-dev-ubuntu24.04-of2412.tar fsi-dev:ubuntu24.04-of2412
+```
+
+### 4.1.2 下载配置好的 Docker 镜像
+
+```bash
+docker pull crpi-aa1htdbuqv3dwyf0.cn-beijing.personal.cr.aliyuncs.com/fsi-dev/fsi-openfoam2412-precice-calculix:v1.0
+```
+
+### 4.2 配置 VS Code Dev Container
 
 - [ ] **创建 `.devcontainer/devcontainer.json`**：
   - [ ] 定义多阶段构建或服务组合
