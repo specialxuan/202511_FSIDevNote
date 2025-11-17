@@ -11,7 +11,7 @@ RM: press right mouse button
 M: move mouse (no pressing or releasing)
 V: visible result
 E: press enter
-**: comment
+** : comment
 
 **start**
 K: start cgx (e.g. with "cgx -b cube.fbd", 
