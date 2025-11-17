@@ -214,7 +214,7 @@ cd ~/tutorials-202404.0/perpendicular-flap
 ├── metadata.yaml
 ├── plot-all-displacements.sh
 ├── plot-displacement.sh
-├── precice-config.xml
+├── precise-config.xml
 ├── README.md
 ├── reference-results
 ├── reference_results.metadata
@@ -237,7 +237,7 @@ cd ~/tutorials-202404.0/perpendicular-flap
 | **`metadata.yaml`**              | 配置文件     | 包含算例的元数据信息，如作者、版本、许可证等。供 preCICE 官方教程管理使用。                                                                                           |
 | **`plot-all-displacements.sh`**  | Bash 脚本    | **后处理脚本。** 用于绘制和比较不同求解器组合下的挡板尖端位移结果（例如，OpenFOAM+CalculiX vs. OpenFOAM+FEniCS）。                                                    |
 | **`plot-displacement.sh`**       | Bash 脚本    | **后处理脚本。** 用于绘制选定固体参与者（如 `solid-calculix`）的挡板尖端位移（`watchpoint` 监测点）随时间变化的曲线图。                                               |
-| **`precice-config.xml`**         | XML 配置文件 | **preCICE 耦合的核心配置文件。** 定义了流体和固体参与者、它们之间的数据交换（力、位移）、接口（耦合面）、时间步长、以及耦合方案（例如，显式或隐式、数据映射方式等）。 |
+| **`precise-config.xml`**         | XML 配置文件 | **preCICE 耦合的核心配置文件。** 定义了流体和固体参与者、它们之间的数据交换（力、位移）、接口（耦合面）、时间步长、以及耦合方案（例如，显式或隐式、数据映射方式等）。 |
 | **`README.md`**                  | 文本文件     | 包含算例的**基本介绍、设置、配置和运行说明**。这是您现在阅读的指南文档。                                                                                              |
 | **`reference-results`**          | 目录         | 包含该算例的**参考结果**文件（通常是 `watchpoint` 日志或绘图数据），用于用户验证自己的模拟结果是否正确。                                                              |
 | **`reference_results.metadata`** | 配置文件     | 描述参考结果文件的元数据。                                                                                                                                            |
@@ -293,7 +293,7 @@ docker save -o fsi-dev-ubuntu24.04-of2412.tar fsi-dev:ubuntu24.04-of2412
 ### 4.1.2 下载配置好的 Docker 镜像
 
 ```bash
-docker pull crpi-aa1htdbuqv3dwyf0.cn-beijing.personal.cr.aliyuncs.com/fsi-dev/fsi-openfoam2412-precice-calculix:v1.0
+docker pull crpi-aa1htdbuqv3dwyf0.cn-beijing.personal.cr.aliyuncs.com/fsi-dev/fsi-openfoam2412-precise-calculix:v1.0
 ```
 
 ### 4.2 配置 VS Code Dev Container
@@ -310,58 +310,79 @@ docker pull crpi-aa1htdbuqv3dwyf0.cn-beijing.personal.cr.aliyuncs.com/fsi-dev/fs
   - [ ] 定义 OpenFOAM 服务
   - [ ] 定义测试用例服务
 
-## 阶段五：VS Code + CMake 开发环境配置
+## 阶段五：VS Code + wmake 二次开发环境配置
 
 ### 5.1 项目源码结构规划
 
-- [ ] **创建 CMake 风格的源码目录**：
-  - [ ] 在 `src/` 下建立 `openfoam-solver/`、`custom-adapter/`、`test-coupling/` 等子模块目录
-  - [ ] 为每个子模块预留 `CMakeLists.txt` 和源文件位置
-- [ ] **设计顶层 CMake 项目结构**：
-  - [ ] 确定是否将 OpenFOAM 求解器、preCICE 接口、测试程序统一纳入 CMake 管理
+- [ ] **创建符合 OpenFOAM 风格的用户源码目录**：
+  - [ ] 在 `$FOAM_USER_SRC/` 下建立清晰模块化结构，例如：
 
-### 5.2 CMake 构建系统配置
+    ```bash
+    $FOAM_USER_SRC/
+    ├── fsi-solvers/          # 自定义 FSI 求解器
+    ├── boundaryConditions/   # 自定义边界条件（如流固耦合接口）
+    ├── dynamicMesh/          # 自定义动网格方法
+    └── utilities/            # 辅助工具（如 preCICE 数据检查器）
+    ```
 
-- [ ] **配置顶层 `CMakeLists.txt`**：
-  - [ ] 设置 C++17 标准和编译器要求
-  - [ ] 集成 OpenFOAM 环境变量与库路径检测逻辑
-  - [ ] 调用 `find_package(precice REQUIRED)` 确保 preCICE 可发现
-  - [ ] 添加子目录（求解器、适配器、测试）
-- [ ] **为各子模块编写 `CMakeLists.txt`**：
-  - [ ] 配置 OpenFOAM 自定义求解器的头文件包含路径和链接库
-  - [ ] 链接 `precice::precice` 目标
-  - [ ] 设置可执行文件输出与安装路径（如 `$FOAM_USER_APPBIN`）
+  - [ ] 每个子模块内部包含标准 `.C` / `.H` 文件及 `Make/` 子目录
+- [ ] **明确各模块输出类型**：
+  - [ ] 求解器 → 可执行程序（`EXE`）
+  - [ ] 边界条件/模型/动网格 → 动态库（`LIB`）
+
+### 5.2 wmake 构建系统配置
+
+- [ ] **为每个开发模块编写 `Make/files`**：
+  - [ ] 列出所有 `.C` 源文件
+  - [ ] 正确指定输出目标：
+    - 可执行程序：`EXE = $(FOAM_USER_APPBIN)/<solver-name>`
+    - 动态库：`LIB = $(FOAM_USER_LIBBIN)/lib<ModuleName>`
+- [ ] **为每个模块编写 `Make/options`**：
+  - [ ] 添加必要的头文件路径（`-I$(LIB_SRC)/.../lnInclude`）
+    - 如 `finiteVolume`, `dynamicMesh`, `meshTools`, `preciseAdapter` 等
+  - [ ] 链接所需 OpenFOAM 库（`-lfiniteVolume -ldynamicMesh ...`）
+  - [ ] 若使用 preCICE adapter，确保包含其头文件与库路径
 
 ### 5.3 VS Code 工作区设置
 
 - [ ] **配置 `.vscode/settings.json`**：
-  - [ ] 指定 CMake 源码与构建目录
-  - [ ] 设置默认 C++ 标准为 C++17
-  - [ ] 指定编译器路径为 `g++-13`
-  - [ ] 启用 `compile_commands.json` 支持
-- [ ] **配置 CMake Kits（可选）**：
-  - [ ] 创建 `.vscode/cmake-kits.json`，定义 GCC 13 编译器及 OpenFOAM 环境变量
-- [ ] **配置构建任务**：
-  - [ ] 在 `.vscode/tasks.json` 中定义 CMake 配置与构建任务
-  - [ ] 添加运行 FSI 测试案例的复合任务
+  - [ ] 启用 C++ 智能感知
+  - [ ] 设置默认 C++ 标准为 C++17（与 OpenFOAM 2412 一致）
+  - [ ] 指定编译器为 `g++-13`
+  - [ ] 启用 `compile_commands.json` 支持以提升代码导航
+- [ ] **生成 `compile_commands.json`**：
+  - [ ] 在每个模块目录下运行：
+
+    ```bash
+    bear -- wmake
+    ```
+
+  - [ ] 或使用 `wmake` 插件自动导出（若可用）
+- [ ] **配置头文件路径（备用方案）**：
+  - [ ] 若无法生成 `compile_commands.json`，在 `c_cpp_properties.json` 中手动添加常用 `lnInclude` 路径
 
 ### 5.4 调试环境配置
 
 - [ ] **配置 `.vscode/launch.json`**：
-  - [ ] 添加针对自定义 OpenFOAM 求解器的 GDB 调试配置
-  - [ ] 设置工作目录、命令行参数（如 `-case`）和环境变量（`WM_PROJECT_DIR` 等）
-  - [ ] 关联预构建任务，确保调试前自动编译
+  - [ ] 添加 GDB 调试配置，用于调试自定义求解器
+  - [ ] 设置工作目录为测试案例路径（如 `~/tutorials/perpendicular-flap/fluid-openfoam`）
+  - [ ] 传递必要参数（如 `-case .`）
+  - [ ] 注入 OpenFOAM 环境变量（可通过 `"env"` 字段或启动脚本）
+    - 推荐方式：在 `launch.json` 中调用 `of2412` 环境加载脚本
 - [ ] **验证调试能力**：
-  - [ ] 能在 VS Code 中设置断点、单步执行、查看变量（尤其 preCICE 数据交换部分）
+  - [ ] 能在 `.C` 文件中设置断点
+  - [ ] 能查看场变量（如 `U`, `p`）、网格信息、preCICE 交换数据等
 
 ### 5.5 开发环境验证
 
 - [ ] **执行端到端构建测试**：
-  - [ ] 在 `of2412` 环境下，使用 CMake 成功构建自定义求解器
-  - [ ] 验证生成的可执行文件可被 OpenFOAM 案例调用
-- [ ] **集成验证脚本**：
-  - [ ] 更新 `scripts/verify_installation.sh`，加入 CMake 项目构建与基本运行测试
-  - [ ] 确保脚本可在 Dev Container 或本地一致运行
+  - [ ] 在 `of2412` 环境下，进入任一模块目录执行 `wmake`
+  - [ ] 验证可执行文件或动态库成功生成至 `$FOAM_USER_APPBIN` / `$FOAM_USER_LIBBIN`
+- [ ] **集成测试验证**：
+  - [ ] 在测试案例中加载自定义库（`libs ("libMyBCs.so");`）
+  - [ ] 运行案例，确认新组件被正确识别和调用
+  - [ ] 更新 `scripts/verify_installation.sh`，加入 `wmake` 编译与基本运行测试
+  - [ ] 确保验证脚本可在 Dev Container 或本地一致运行
 
 ## 阶段六：开发工作流建立
 
@@ -442,7 +463,7 @@ docker pull crpi-aa1htdbuqv3dwyf0.cn-beijing.personal.cr.aliyuncs.com/fsi-dev/fs
 ### 9.2 Git 协作流程配置
 
 - [x] **配置 Git 仓库**：
-  - [x] 设置远程仓库（GitHub/GitLab/Gitee）
+  - [x] 设置远程仓库（GitHub）
   - [ ] 配置分支保护规则
   - [ ] 设置协作权限
 - [x] **建立 Git 工作流**：
